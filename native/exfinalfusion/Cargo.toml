@@ -1,0 +1,12 @@
+[package]
+name = "exfinalfusion"
+version = "0.1.0"
+authors = []
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+finalfusion = "0.18"
+rustler = "0.32"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["rc", "derive"] }
