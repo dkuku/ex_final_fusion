@@ -9,24 +9,29 @@ rustler::atoms! { error, ok, }
 
 type Embeds = Embeddings<VocabWrap, StorageWrap>;
 pub struct ExFinalFusionRef(Embeds);
-
-#[derive(rustler::NifStruct)]
-#[module = "ExFinalFusion.Embeddings"]
-pub struct ExEmbeddings {
-    pub resource: ResourceArc<ExFinalFusionRef>,
-}
 impl<'a> Encoder for ExFinalFusionRef {
     fn encode<'b>(&self, env: Env<'b>) -> Term<'b> {
         (ok(), self).encode(env)
     }
 }
 
+impl From<Embeds> for ExEmbeddings {
+    fn from(data: Embeds) -> Self {
+        Self {
+            resource: ResourceArc::new(ExFinalFusionRef(data)),
+        }
+    }
+}
+#[derive(rustler::NifStruct)]
+#[module = "ExFinalFusion.Embeddings"]
+pub struct ExEmbeddings {
+    pub resource: ResourceArc<ExFinalFusionRef>,
+}
+
 #[rustler::nif]
 pub fn from_file(path: &str) -> Result<ExEmbeddings, ExFinalFusionError> {
     match exfinalfusion::from_file(path) {
-        Ok(embeddings) => Ok(ExEmbeddings {
-            resource: ResourceArc::new(ExFinalFusionRef(embeddings)),
-        }),
+        Ok(embeddings) => Ok(embeddings.into()),
         Err(_) => todo!(),
     }
 }
