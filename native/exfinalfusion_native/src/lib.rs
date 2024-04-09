@@ -47,7 +47,7 @@ fn load(env: Env, _info: Term) -> bool {
     true
 }
 rustler::init!(
-    "Elixir.ExFinalFusion",
+    "Elixir.ExFinalFusion.Native",
     [from_file, get_embeddings],
     load = load
 );

@@ -4,6 +4,19 @@ defmodule ExFinalFusion do
   """
 end
 
+defmodule ExFinalFusion.Embeddings do
+  defstruct [:resource]
+end
+
+defimpl Inspect, for: ExFinalFusion.Embeddings do
+  def inspect(embeddings, _opts) do
+    Inspect.Algebra.concat([
+      "#ExFinalFusion",
+      to_string(Enum.drop(:erlang.ref_to_list(embeddings.resource), 4))
+    ])
+  end
+end
+
 defmodule ExFinalFusion.Native do
   use Rustler,
     otp_app: :ex_final_fusion,
