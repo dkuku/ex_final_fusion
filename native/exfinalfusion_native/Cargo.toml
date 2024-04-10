@@ -12,6 +12,9 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1.0"
 finalfusion = "0.18"
-rustler = "0.32"
 thiserror = "1.0"
-serde = { version = "1.0", features = ["rc", "derive"] }
+ndarray = { version = "0.15.6", features = ["serde-1"] }
+serde_rustler = { path = "../../../serde_rustler/serde_rustler" }
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0"
+rustler = "0.32"

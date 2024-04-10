@@ -1,5 +1,6 @@
 use finalfusion::error::Error as FFError;
 use rustler::{Encoder, Env, Term};
+use serde_rustler::Error as SRError;
 use std::io;
 use thiserror::Error;
 
@@ -10,8 +11,10 @@ rustler::atoms! {
 
 #[derive(Error, Debug)]
 pub enum ExFinalFusionError {
-    #[error("ff Error")]
+    #[error("FF Error")]
     FF(#[from] FFError),
+    #[error("SR Error")]
+    SR(#[from] SRError),
     #[error("IO Error")]
     Io(#[from] io::Error),
     #[error("Internal Error: {0}")]

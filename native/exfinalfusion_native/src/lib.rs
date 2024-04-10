@@ -4,9 +4,20 @@ pub mod exfinalfusion;
 use crate::error::ExFinalFusionError;
 use finalfusion::prelude::*;
 
-use rustler::{Encoder, Env, ResourceArc, Term};
+use rustler::{Atom, Encoder, Env, NifTuple, ResourceArc, Term};
+mod atoms {
+    rustler::atoms! {
+        ok,
+        error,
+    }
+}
 rustler::atoms! { error, ok, }
 
+#[derive(NifTuple)]
+struct ResponseTerm<'a> {
+    status: Atom,
+    message: Term<'a>,
+}
 type Embeds = Embeddings<VocabWrap, StorageWrap>;
 pub struct ExFinalFusionRef(Embeds);
 impl<'a> Encoder for ExFinalFusionRef {
@@ -36,11 +47,18 @@ pub fn from_file(path: &str) -> Result<ExEmbeddings, ExFinalFusionError> {
     }
 }
 #[rustler::nif]
-pub fn get_embeddings(reference: ExEmbeddings, string: &str) -> String {
+pub fn get_embeddings<'a>(
+    env: Env<'a>,
+    reference: ExEmbeddings,
+    string: &str,
+) -> Result<Term<'a>, ExFinalFusionError> {
     let embeds = &reference.resource.0;
     let embeddings = embeds.embedding(string).unwrap();
-    println!("{:?}", &embeddings);
-    embeddings.to_string()
+    let vec = &embeddings.iter().collect::<Vec<&f32>>();
+    match serde_rustler::to_term(env, vec) {
+        Ok(term) => Ok(term),
+        Err(_e) => todo!(),
+    }
 }
 fn load(env: Env, _info: Term) -> bool {
     rustler::resource!(ExFinalFusionRef, env);

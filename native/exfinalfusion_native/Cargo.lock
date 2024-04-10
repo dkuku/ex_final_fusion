@@ -96,8 +96,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "finalfusion",
+ "ndarray",
  "rustler",
  "serde",
+ "serde_derive",
+ "serde_rustler",
  "thiserror",
 ]
 
@@ -234,6 +237,7 @@ dependencies = [
  "num-traits",
  "rawpointer",
  "rayon",
+ "serde",
 ]
 
 [[package]]
@@ -295,6 +299,12 @@ checksum = "e835ff2298f5721608eb1a980ecaee1aef2c132bf95ecc026a11b7bf3c01c02e"
 dependencies = [
  "unicode-ident",
 ]
+
+[[package]]
+name = "quick-error"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
@@ -468,6 +478,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "serde_rustler"
+version = "0.0.8"
+dependencies = [
+ "lazy_static",
+ "quick-error",
+ "rustler",
+ "serde",
 ]
 
 [[package]]
