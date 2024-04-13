@@ -66,17 +66,19 @@ pub fn read(path: &str, filetype: FileType) -> Result<ExEmbeddings, ExFinalFusio
         FileType::Embeddings => Embeddings::read_embeddings(&mut reader)?,
         FileType::MmapEmbeddings => Embeddings::mmap_embeddings(&mut reader)?,
 
-        //FileType::Word2vec => Embeddings::read_word2vec_binary(&mut reader)?,
-        // FileType::Floret => Embeddings::read_floret_text(&mut reader)?,
-        // FileType::FloretText => Embeddings::read_floret_text(&mut reader)?,
-        // FileType::Fasttext => Embeddings::read_fasttext(&mut reader)?,
-        // FileType::FasttextLossy => Embeddings::read_fasttext_lossy(&mut reader)?,
-        // FileType::Text => Embeddings::read_text(&mut reader)?,
-        // FileType::TextLossy => Embeddings::read_text_lossy(&mut reader)?,
-        // FileType::TextDims => Embeddings::read_text_dims(&mut reader)?,
-        // FileType::TextDimsLossy => Embeddings::read_text_dims_lossy(&mut reader)?,
-        // FileType::Word2vecBinary => Embeddings::read_word2vec_binary(&mut reader)?,
-        // FileType::Word2vecBinaryLossy => Embeddings::read_word2vec_binary_lossy(&mut reader)?,
+        FileType::Word2vec => Embeddings::read_word2vec_binary(&mut reader)?.into(),
+        //FileType::Floret => Embeddings::read_floret_text(&mut reader)?.into(),
+        //FileType::FloretText => Embeddings::read_floret_text(&mut reader)?.into(),
+        FileType::Fasttext => Embeddings::read_fasttext(&mut reader)?.into(),
+        FileType::FasttextLossy => Embeddings::read_fasttext_lossy(&mut reader)?.into(),
+        FileType::Text => Embeddings::read_text(&mut reader)?.into(),
+        FileType::TextLossy => Embeddings::read_text_lossy(&mut reader)?.into(),
+        FileType::TextDims => Embeddings::read_text_dims(&mut reader)?.into(),
+        FileType::TextDimsLossy => Embeddings::read_text_dims_lossy(&mut reader)?.into(),
+        FileType::Word2vecBinary => Embeddings::read_word2vec_binary(&mut reader)?.into(),
+        FileType::Word2vecBinaryLossy => {
+            Embeddings::read_word2vec_binary_lossy(&mut reader)?.into()
+        }
         _ => todo!(),
     };
     Ok(embeddings.into())

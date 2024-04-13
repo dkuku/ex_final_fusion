@@ -22,8 +22,13 @@ defmodule ExFinalFusion.Native do
     otp_app: :ex_final_fusion,
     crate: "exfinalfusion_native"
 
-  def from_file(_arg1), do: err()
-  def get_embeddings(_arg1, _arg2), do: err()
+  def read(_arg1, _arg2), do: err()
+  def embedding(_arg1, _arg2), do: err()
+  def embedding_batch(_arg1, _arg2), do: err()
+
+  def len(_arg1), do: err()
+  def dims(_arg1), do: err()
+  def metadata(_arg1), do: err()
 
   defp err, do: :erlang.nif_error(:nif_not_loaded)
 end
