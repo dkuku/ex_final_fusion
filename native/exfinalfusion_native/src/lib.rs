@@ -90,10 +90,10 @@ pub fn embedding_batch<'a>(
     words: Vec<&str>,
 ) -> Result<Term<'a>, ExFinalFusionError> {
     let (embeddings, _rest) = &reference.resource.0.embedding_batch(&words);
-    match serde_rustler::to_term(env, embeddings.clone().into_raw_vec()) {
-        Ok(term) => Ok(term),
-        Err(e) => Err(ExFinalFusionError::SR(e)),
-    }
+    Ok(serde_rustler::to_term(
+        env,
+        embeddings.clone().into_raw_vec(),
+    )?)
 }
 #[rustler::nif]
 pub fn embedding<'a>(
@@ -103,10 +103,7 @@ pub fn embedding<'a>(
 ) -> Result<Term<'a>, ExFinalFusionError> {
     let embeddings = &reference.resource.0.embedding(string).unwrap();
     let vec = &embeddings.iter().collect::<Vec<&f32>>();
-    match serde_rustler::to_term(env, vec) {
-        Ok(term) => Ok(term),
-        Err(e) => Err(ExFinalFusionError::SR(e)),
-    }
+    Ok(serde_rustler::to_term(env, vec)?)
 }
 #[rustler::nif]
 pub fn metadata(env: Env, reference: ExEmbeddings) -> Option<Term> {
