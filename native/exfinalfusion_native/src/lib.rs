@@ -1,4 +1,5 @@
 pub mod error;
+use finalfusion::compat::floret::ReadFloretText;
 
 use crate::error::ExFinalFusionError;
 use finalfusion::prelude::*;
@@ -22,8 +23,8 @@ struct ResponseTerm<'a> {
 }
 type EmbeddingWrap = Embeddings<VocabWrap, StorageWrap>;
 pub struct ExFinalFusionRef(EmbeddingWrap);
-impl<'a> Encoder for ExFinalFusionRef {
-    fn encode<'b>(&self, env: Env<'b>) -> Term<'b> {
+impl Encoder for ExFinalFusionRef {
+    fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
         (ok(), self).encode(env)
     }
 }
@@ -41,9 +42,6 @@ pub struct ExEmbeddings {
 }
 #[derive(NifUnitEnum, Debug)]
 pub enum FileType {
-    Fifu,
-    Word2vec,
-    Floret,
     FloretText,
     Embeddings,
     MmapEmbeddings,
@@ -55,6 +53,10 @@ pub enum FileType {
     TextDimsLossy,
     Word2vecBinary,
     Word2vecBinaryLossy,
+    //aliases for the most popular ones
+    Fifu,
+    Word2vec,
+    Floret,
 }
 
 #[rustler::nif]
@@ -65,10 +67,9 @@ pub fn read(path: &str, filetype: FileType) -> Result<ExEmbeddings, ExFinalFusio
         FileType::Fifu => Embeddings::read_embeddings(&mut reader)?,
         FileType::Embeddings => Embeddings::read_embeddings(&mut reader)?,
         FileType::MmapEmbeddings => Embeddings::mmap_embeddings(&mut reader)?,
-
         FileType::Word2vec => Embeddings::read_word2vec_binary(&mut reader)?.into(),
-        //FileType::Floret => Embeddings::read_floret_text(&mut reader)?.into(),
-        //FileType::FloretText => Embeddings::read_floret_text(&mut reader)?.into(),
+        FileType::Floret => Embeddings::read_floret_text(&mut reader)?.into(),
+        FileType::FloretText => Embeddings::read_floret_text(&mut reader)?.into(),
         FileType::Fasttext => Embeddings::read_fasttext(&mut reader)?.into(),
         FileType::FasttextLossy => Embeddings::read_fasttext_lossy(&mut reader)?.into(),
         FileType::Text => Embeddings::read_text(&mut reader)?.into(),
@@ -79,7 +80,6 @@ pub fn read(path: &str, filetype: FileType) -> Result<ExEmbeddings, ExFinalFusio
         FileType::Word2vecBinaryLossy => {
             Embeddings::read_word2vec_binary_lossy(&mut reader)?.into()
         }
-        _ => todo!(),
     };
     Ok(embeddings.into())
 }
@@ -140,43 +140,22 @@ rustler::init!(
 //    "new",
 //    "into_parts",
 //    "metadata",
-//    "metadata_mut",
 //    "norms",
 //    "set_metadata",
 //    "storage",
 //    "vocab",
-//    "dims",
 //    "embedding",
 //    "embedding_into",
 //    "embedding_batch",
-//    "embedding_batch_into",
 //    "embedding_with_norm",
-//    "iter",
-//    "iter_with_norms",
-//    "len",
-//    "to_explicit",
-//    "try_to_explicit",
+
 //    "analogy_masked",
 //    "analogy",
-//    "clone",
-//    "clone_from",
 //    "fmt",
 //    "embedding_similarity_masked",
 //    "embedding_similarity",
-//    "into_iter",
-//    "mmap_embeddings",
 //    "quantize_using",
 //    "quantize",
-//    "read_embeddings",
-//    "read_fasttext",
-//    "read_fasttext_lossy",
-//    "read_floret_text",
-//    "read_text",
-//    "read_text_lossy",
-//    "read_text_dims",
-//    "read_text_dims_lossy",
-//    "read_word2vec_binary",
-//    "read_word2vec_binary_lossy",
 //    "word_similarity",
 //    "write_embeddings",
 //    "write_embeddings_len",
@@ -186,17 +165,4 @@ rustler::init!(
 //    "write_text_dims",
 //    "write_word2vec_binary",
 //    "type_id",
-//    "borrow",
-//    "borrow_mut",
-//    "from",
-//    "into",
-//    "init",
-//    "deref",
-//    "deref_mut",
-//    "drop",
-//    "to_owned",
-//    "clone_into",
-//    "try_from",
-//    "try_into",
-//    "vzip",
 //];
