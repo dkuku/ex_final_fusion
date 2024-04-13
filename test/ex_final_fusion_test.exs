@@ -47,12 +47,74 @@ defmodule ExFinalFusionTest do
       assert 41 == ExFinalFusion.Native.len(ref)
     end
 
+    test "words_len", %{ref: ref} do
+      assert 41 == ExFinalFusion.Native.words_len(ref)
+    end
+
+    test "vocab_len", %{ref: ref} do
+      assert 41 == ExFinalFusion.Native.vocab_len(ref)
+    end
+
     test "dims", %{ref: ref} do
       assert 100 == ExFinalFusion.Native.dims(ref)
     end
 
     test "metadata", %{ref: ref} do
       assert nil == ExFinalFusion.Native.metadata(ref)
+    end
+
+    test "words", %{ref: ref} do
+      assert {:ok,
+              [
+                "Berlin",
+                "Potsdam",
+                "Hamburg",
+                "Leipzig",
+                "Dresden",
+                "München",
+                "Düsseldorf",
+                "Bonn",
+                "Stuttgart",
+                "Weimar",
+                "Berlin-Charlottenburg",
+                "Rostock",
+                "Karlsruhe",
+                "Chemnitz",
+                "Breslau",
+                "Wiesbaden",
+                "Hannover",
+                "Mannheim",
+                "Kassel",
+                "Köln",
+                "Danzig",
+                "Erfurt",
+                "Dessau",
+                "Bremen",
+                "Charlottenburg",
+                "Magdeburg",
+                "Neuruppin",
+                "Darmstadt",
+                "Jena",
+                "Wien",
+                "Heidelberg",
+                "Dortmund",
+                "Stettin",
+                "Schwerin",
+                "Neubrandenburg",
+                "Greifswald",
+                "Göttingen",
+                "Braunschweig",
+                "Berliner",
+                "Warschau",
+                "Berlin-Spandau"
+              ]} ==
+               ExFinalFusion.Native.words(ref)
+    end
+
+    test "idx", %{ref: ref} do
+      assert {:word, [0]} == ExFinalFusion.Native.idx(ref, "Berlin")
+      assert {:word, [23]} == ExFinalFusion.Native.idx(ref, "Bremen")
+      assert nil == ExFinalFusion.Native.idx(ref, "Bucharest")
     end
   end
 end

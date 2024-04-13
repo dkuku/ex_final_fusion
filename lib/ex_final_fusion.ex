@@ -73,8 +73,17 @@ defmodule ExFinalFusion.Native do
   @spec embedding(reference(), [String.t()]) :: {:ok, [[float]]}
   def embedding_batch(_arg1, _arg2), do: err()
 
+  @spec words(reference()) :: [String.t()]
+  def words(_arg1), do: err()
+
+  @spec idx(reference(), String.t()) :: nil | {:word, [integer]} | {:subword, [integer]}
+  def idx(_arg1, _arg2), do: err()
   @spec len(reference()) :: integer
   def len(_arg1), do: err()
+  @spec words_len(reference()) :: integer
+  def words_len(_arg1), do: err()
+  @spec vocab_len(reference()) :: integer
+  def vocab_len(_arg1), do: err()
   @spec dims(reference()) :: [integer]
   def dims(_arg1), do: err()
   @spec metadata(reference()) :: map() | nil

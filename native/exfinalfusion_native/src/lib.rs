@@ -1,8 +1,11 @@
 pub mod error;
-use finalfusion::compat::floret::ReadFloretText;
-
 use crate::error::ExFinalFusionError;
+use finalfusion::compat::floret::ReadFloretText;
 use finalfusion::prelude::*;
+use finalfusion::vocab::{
+    Vocab,
+    WordIndex::{Subword, Word},
+};
 use std::fs::File;
 use std::io::BufReader;
 use std::ops::Deref;
@@ -12,9 +15,10 @@ mod atoms {
     rustler::atoms! {
         ok,
         error,
+        word,
+        subword,
     }
 }
-rustler::atoms! { error, ok, }
 
 #[derive(NifTuple)]
 struct ResponseTerm<'a> {
@@ -25,7 +29,7 @@ type EmbeddingWrap = Embeddings<VocabWrap, StorageWrap>;
 pub struct ExFinalFusionRef(EmbeddingWrap);
 impl Encoder for ExFinalFusionRef {
     fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
-        (ok(), self).encode(env)
+        (atoms::ok(), self).encode(env)
     }
 }
 impl From<EmbeddingWrap> for ExEmbeddings {
@@ -87,9 +91,9 @@ pub fn read(path: &str, filetype: FileType) -> Result<ExEmbeddings, ExFinalFusio
 pub fn embedding_batch<'a>(
     env: Env<'a>,
     reference: ExEmbeddings,
-    words: Vec<&str>,
+    strings: Vec<&str>,
 ) -> Result<Term<'a>, ExFinalFusionError> {
-    let (embeddings, _rest) = &reference.resource.0.embedding_batch(&words);
+    let (embeddings, _rest) = &reference.resource.0.embedding_batch(&strings);
     Ok(serde_rustler::to_term(
         env,
         embeddings.clone().into_raw_vec(),
@@ -101,9 +105,15 @@ pub fn embedding<'a>(
     reference: ExEmbeddings,
     string: &str,
 ) -> Result<Term<'a>, ExFinalFusionError> {
-    let embeddings = &reference.resource.0.embedding(string).unwrap();
-    let vec = &embeddings.iter().collect::<Vec<&f32>>();
-    Ok(serde_rustler::to_term(env, vec)?)
+    match &reference.resource.0.embedding(string) {
+        Some(embeddings) => {
+            let vec = &embeddings.iter().collect::<Vec<&f32>>();
+            Ok(serde_rustler::to_term(env, vec)?)
+        }
+        None => Err(ExFinalFusionError::Internal(
+            "embedding not found".to_string(),
+        )),
+    }
 }
 #[rustler::nif]
 pub fn metadata(env: Env, reference: ExEmbeddings) -> Option<Term> {
@@ -117,6 +127,26 @@ pub fn metadata(env: Env, reference: ExEmbeddings) -> Option<Term> {
     }
 }
 #[rustler::nif]
+pub fn words(env: Env<'_>, reference: ExEmbeddings) -> Result<Term<'_>, ExFinalFusionError> {
+    let vocab_words = reference
+        .resource
+        .0
+        .vocab()
+        .words()
+        .iter()
+        .map(|word| word.to_string())
+        .collect::<Vec<String>>();
+    Ok(serde_rustler::to_term(env, vocab_words)?)
+}
+#[rustler::nif]
+pub fn idx<'a>(env: Env<'a>, reference: ExEmbeddings, string: &str) -> Option<Term<'a>> {
+    match reference.resource.0.vocab().idx(string) {
+        Some(Word(index)) => Some((atoms::word(), vec![index]).encode(env)),
+        Some(Subword(indexes)) => Some((atoms::subword(), indexes).encode(env)),
+        None => None,
+    }
+}
+#[rustler::nif]
 pub fn len(reference: ExEmbeddings) -> usize {
     reference.resource.0.len()
 }
@@ -124,13 +154,32 @@ pub fn len(reference: ExEmbeddings) -> usize {
 pub fn dims(reference: ExEmbeddings) -> usize {
     reference.resource.0.dims()
 }
+#[rustler::nif]
+pub fn vocab_len(reference: ExEmbeddings) -> usize {
+    reference.resource.0.vocab().vocab_len()
+}
+#[rustler::nif]
+pub fn words_len(reference: ExEmbeddings) -> usize {
+    reference.resource.0.vocab().words_len()
+}
 fn load(env: Env, _info: Term) -> bool {
     rustler::resource!(ExFinalFusionRef, env);
     true
 }
 rustler::init!(
     "Elixir.ExFinalFusion.Native",
-    [read, embedding, embedding_batch, len, metadata, dims],
+    [
+        read,
+        embedding,
+        embedding_batch,
+        len,
+        words_len,
+        vocab_len,
+        words,
+        idx,
+        metadata,
+        dims
+    ],
     load = load
 );
 //vec![
