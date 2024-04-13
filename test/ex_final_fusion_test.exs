@@ -141,7 +141,7 @@ defmodule ExFinalFusionTest do
                )
     end
 
-    test "word_similarity", %{ref: ref} do
+    test "word_cosine_similarity", %{ref: ref} do
       assert {:ok,
               [
                 {"Leipzig", 282.1345520019531},
@@ -151,6 +151,55 @@ defmodule ExFinalFusionTest do
                 {"Hamburg", 248.80035400390625}
               ]} ==
                ExFinalFusion.Native.word_similarity(ref, "Berlin",
+                 similarity_type: :cosine_similarity,
+                 limit: 5,
+                 batch_size: 1
+               )
+    end
+
+    test "word_angular_similarity", %{ref: ref} do
+      assert {:ok,
+              [
+                {"Leipzig", 0.0},
+                {"Dresden", 0.0},
+                {"Potsdam", 0.0},
+                {"München", 0.0},
+                {"Hamburg", 0.0}
+              ]} ==
+               ExFinalFusion.Native.word_similarity(ref, "Berlin",
+                 similarity_type: :angular_similarity,
+                 limit: 5,
+                 batch_size: 1
+               )
+    end
+
+    test "word_eucliean_similarity", %{ref: ref} do
+      assert {:ok,
+              [
+                {"Leipzig", 0.0},
+                {"Dresden", 0.0},
+                {"Potsdam", 0.0},
+                {"München", 0.0},
+                {"Hamburg", 0.0}
+              ]} ==
+               ExFinalFusion.Native.word_similarity(ref, "Berlin",
+                 similarity_type: :euclidean_similarity,
+                 limit: 5,
+                 batch_size: 1
+               )
+    end
+
+    test "word_eucliean_distance", %{ref: ref} do
+      assert {:ok,
+              [
+                {"Leipzig", 0.0},
+                {"Dresden", 0.0},
+                {"Potsdam", 0.0},
+                {"München", 0.0},
+                {"Hamburg", 0.0}
+              ]} ==
+               ExFinalFusion.Native.word_similarity(ref, "Berlin",
+                 similarity_type: :euclidean_distance,
                  limit: 5,
                  batch_size: 1
                )

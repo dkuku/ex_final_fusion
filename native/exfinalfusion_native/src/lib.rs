@@ -2,7 +2,7 @@ pub mod error;
 use crate::error::ExFinalFusionError;
 use finalfusion::compat::floret::ReadFloretText;
 use finalfusion::prelude::*;
-use finalfusion::similarity::{Analogy, WordSimilarity};
+use finalfusion::similarity::{Analogy, WordSimilarity, WordSimilarityResult};
 use finalfusion::vocab::{
     Vocab,
     WordIndex::{Subword, Word},
@@ -20,15 +20,24 @@ mod atoms {
         subword,
     }
 }
-
-#[derive(NifTaggedEnum)]
+#[derive(NifTaggedEnum, Clone, Debug)]
+pub enum SimilarityType {
+    AngularSimilarity,
+    CosineSimilarity,
+    EuclideanSimilarity,
+    EuclideanDistance,
+}
+#[derive(NifTaggedEnum, Debug)]
 pub enum SearchOptionPub {
     Limit(usize),
     BatchSize(usize),
+    SimilarityType(SimilarityType),
 }
+#[derive(Debug)]
 struct SearchOption {
     limit: usize,
     batch_size: Option<usize>,
+    similarity_type: SimilarityType,
 }
 
 #[derive(NifTuple)]
@@ -213,20 +222,11 @@ fn word_similarity(
         .resource
         .0
         .word_similarity(string, opts.limit, opts.batch_size)
-        .iter()
-        .flat_map(|s| {
-            s.iter()
-                .map(|similarity| {
-                    (
-                        similarity.word().to_string(),
-                        similarity.cosine_similarity(),
-                    )
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
-    Ok(result)
+        .expect("Similarities not found");
+    let data = convert_result(result, &opts);
+    Ok(data)
 }
+
 fn analogy_wrapper(
     reference: ExEmbeddings,
     strings: [&str; 3],
@@ -239,20 +239,35 @@ fn analogy_wrapper(
         .resource
         .0
         .analogy_masked(strings, mask, opts.limit, opts.batch_size)
-        .map_err(|_| "xxx")
+        .map_err(|_e| ExFinalFusionError::Other("Mask problem".to_string()))?;
+    Ok(convert_result(result, &opts))
+}
+fn convert_result(result: Vec<WordSimilarityResult>, options: &SearchOption) -> Vec<(String, f32)> {
+    result
         .iter()
-        .flat_map(|s| {
-            s.iter()
-                .map(|similarity| {
-                    (
-                        similarity.word().to_string(),
-                        similarity.cosine_similarity(),
-                    )
-                })
-                .collect::<Vec<_>>()
+        .map(|similarity| {
+            (
+                similarity.word().to_string(),
+                get_similarity_value(similarity, &options.similarity_type),
+            )
         })
-        .collect::<Vec<_>>();
-    Ok(result)
+        .collect::<Vec<_>>()
+}
+fn get_similarity_value(
+    similarity: &WordSimilarityResult,
+    similarity_type: &SimilarityType,
+) -> f32 {
+    let similarity_value = match similarity_type {
+        SimilarityType::AngularSimilarity => similarity.angular_similarity(),
+        SimilarityType::CosineSimilarity => similarity.cosine_similarity(),
+        SimilarityType::EuclideanSimilarity => similarity.euclidean_similarity(),
+        SimilarityType::EuclideanDistance => similarity.euclidean_distance(),
+    };
+    if f32::is_nan(similarity_value) {
+        0.0
+    } else {
+        similarity_value
+    }
 }
 fn load(env: Env, _info: Term) -> bool {
     rustler::resource!(ExFinalFusionRef, env);
@@ -262,10 +277,13 @@ fn get_options(options: Vec<SearchOptionPub>) -> SearchOption {
     let mut opts = SearchOption {
         limit: 1,
         batch_size: None,
+        similarity_type: SimilarityType::CosineSimilarity,
     };
+
     options.iter().for_each(|option| match option {
         SearchOptionPub::Limit(val) => opts.limit = *val,
         SearchOptionPub::BatchSize(val) => opts.batch_size = Some(*val),
+        SearchOptionPub::SimilarityType(val) => opts.similarity_type = val.clone(),
     });
     opts
 }
