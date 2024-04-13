@@ -7,6 +7,7 @@ use finalfusion::vocab::{
     Vocab,
     WordIndex::{Subword, Word},
 };
+use ndarray::Axis;
 use std::fs::File;
 use std::io::BufReader;
 use std::ops::Deref;
@@ -114,10 +115,11 @@ pub fn embedding_batch<'a>(
     strings: Vec<&str>,
 ) -> Result<Term<'a>, ExFinalFusionError> {
     let (embeddings, _rest) = &reference.resource.0.embedding_batch(&strings);
-    Ok(serde_rustler::to_term(
-        env,
-        embeddings.clone().into_raw_vec(),
-    )?)
+    let embeddings_array = embeddings
+        .axis_iter(Axis(0))
+        .map(|x| x.iter().cloned().collect::<Vec<f32>>())
+        .collect::<Vec<_>>();
+    Ok(serde_rustler::to_term(env, &embeddings_array)?)
 }
 #[rustler::nif]
 pub fn embedding<'a>(

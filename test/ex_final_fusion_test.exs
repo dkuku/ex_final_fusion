@@ -38,6 +38,15 @@ defmodule ExFinalFusionTest do
     end
   end
 
+  describe "embeddings batch" do
+    test "fifu" do
+      assert {:ok, ref} = ExFinalFusion.Native.read("test/testdata/similarity.fifu", :fifu)
+      assert {:ok, emb} = ExFinalFusion.Native.embedding(ref, "Berlin")
+      assert {:ok, [emb_berlin, _emb_bremen]} = ExFinalFusion.Native.embedding_batch(ref, ["Berlin", "Bremen"])
+      assert emb_berlin == emb
+    end
+  end
+
   describe "metadata" do
     setup do
       {:ok, ref} = ExFinalFusion.Native.read("test/testdata/similarity.fifu", :fifu)
