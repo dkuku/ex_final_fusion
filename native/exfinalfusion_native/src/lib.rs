@@ -2,6 +2,7 @@ pub mod error;
 use crate::error::ExFinalFusionError;
 use finalfusion::compat::floret::ReadFloretText;
 use finalfusion::prelude::*;
+use finalfusion::similarity::Analogy;
 use finalfusion::vocab::{
     Vocab,
     WordIndex::{Subword, Word},
@@ -10,7 +11,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::ops::Deref;
 
-use rustler::{Atom, Encoder, Env, NifTuple, NifUnitEnum, ResourceArc, Term};
+use rustler::{Atom, Encoder, Env, NifTaggedEnum, NifTuple, NifUnitEnum, ResourceArc, Term};
 mod atoms {
     rustler::atoms! {
         ok,
@@ -25,7 +26,7 @@ struct ResponseTerm<'a> {
     status: Atom,
     message: Term<'a>,
 }
-type EmbeddingWrap = Embeddings<VocabWrap, StorageWrap>;
+type EmbeddingWrap = Embeddings<VocabWrap, StorageViewWrap>;
 pub struct ExFinalFusionRef(EmbeddingWrap);
 impl Encoder for ExFinalFusionRef {
     fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
@@ -162,6 +163,80 @@ pub fn vocab_len(reference: ExEmbeddings) -> usize {
 pub fn words_len(reference: ExEmbeddings) -> usize {
     reference.resource.0.vocab().words_len()
 }
+
+#[derive(NifTaggedEnum)]
+pub enum AnalogyOption {
+    Limit(usize),
+    BatchSize(usize),
+}
+
+#[rustler::nif]
+pub fn analogy(
+    reference: ExEmbeddings,
+    w1: &str,
+    w2: &str,
+    w3: &str,
+    options: Vec<AnalogyOption>,
+) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
+    analogy_wrapper(reference, [w1, w2, w3], [true; 3], options)
+}
+#[rustler::nif]
+pub fn analogy_masked(
+    reference: ExEmbeddings,
+    w1: &str,
+    w1_mask: bool,
+    w2: &str,
+    w2_mask: bool,
+    w3: &str,
+    w3_mask: bool,
+    options: Vec<AnalogyOption>,
+) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
+    analogy_wrapper(
+        reference,
+        [w1, w2, w3],
+        [w1_mask, w2_mask, w3_mask],
+        options,
+    )
+}
+fn analogy_wrapper(
+    reference: ExEmbeddings,
+    strings: [&str; 3],
+    mask: [bool; 3],
+    options: Vec<AnalogyOption>,
+) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
+    struct Opts {
+        limit: usize,
+        batch_size: Option<usize>,
+    }
+
+    // Default values
+    let mut opts = Opts {
+        limit: 1,
+        batch_size: None,
+    };
+    options.iter().for_each(|option| match option {
+        AnalogyOption::Limit(val) => opts.limit = *val,
+        AnalogyOption::BatchSize(val) => opts.batch_size = Some(*val),
+    });
+    let result = reference
+        .resource
+        .0
+        .analogy_masked(strings, mask, opts.limit, opts.batch_size)
+        .map_err(|_| "xxx")
+        .iter()
+        .flat_map(|s| {
+            s.iter()
+                .map(|similarity| {
+                    (
+                        similarity.word().to_string(),
+                        similarity.cosine_similarity(),
+                    )
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    Ok(result)
+}
 fn load(env: Env, _info: Term) -> bool {
     rustler::resource!(ExFinalFusionRef, env);
     true
@@ -169,46 +244,32 @@ fn load(env: Env, _info: Term) -> bool {
 rustler::init!(
     "Elixir.ExFinalFusion.Native",
     [
-        read,
+        analogy,
+        analogy_masked,
+        dims,
         embedding,
         embedding_batch,
+        idx,
         len,
-        words_len,
+        metadata,
+        read,
         vocab_len,
         words,
-        idx,
-        metadata,
-        dims
+        words_len,
     ],
     load = load
 );
 //vec![
-//    "new",
 //    "into_parts",
-//    "metadata",
 //    "norms",
-//    "set_metadata",
-//    "storage",
-//    "vocab",
-//    "embedding",
+
 //    "embedding_into",
-//    "embedding_batch",
 //    "embedding_with_norm",
 
-//    "analogy_masked",
-//    "analogy",
 //    "fmt",
 //    "embedding_similarity_masked",
 //    "embedding_similarity",
 //    "quantize_using",
 //    "quantize",
-//    "word_similarity",
-//    "write_embeddings",
-//    "write_embeddings_len",
-//    "write_fasttext",
-//    "write_floret_text",
-//    "write_text",
-//    "write_text_dims",
-//    "write_word2vec_binary",
 //    "type_id",
 //];

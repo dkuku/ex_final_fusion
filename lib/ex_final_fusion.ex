@@ -1,6 +1,9 @@
 defmodule ExFinalFusion do
   @moduledoc """
   Documentation for `ExFinalFusion`.
+
+  Where to get models:
+  - https://fasttext.cc/
   """
 end
 
@@ -90,6 +93,12 @@ defmodule ExFinalFusion.Native do
   def dims(_arg1), do: err()
   @spec metadata(reference()) :: map() | nil
   def metadata(_arg1), do: err()
+  @spec analogy(reference, String.t(), String.t(), String.t(), Keyword.t()) :: {:ok, [{String.t(), float}]}
+  def analogy(_arg1, _arg2, _arg3, _arg4, _arg5 \\ []), do: err()
+
+  @spec analogy_masked(reference, String.t(), String.t(), String.t(), bool, bool, bool, Keyword.t()) ::
+          {:ok, [{String.t(), float}]}
+  def analogy_masked(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8 \\ []), do: err()
 
   defp err, do: :erlang.nif_error(:nif_not_loaded)
 end

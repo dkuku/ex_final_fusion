@@ -117,5 +117,28 @@ defmodule ExFinalFusionTest do
       assert {:word, [23]} == ExFinalFusion.Native.idx(ref, "Bremen")
       assert nil == ExFinalFusion.Native.idx(ref, "Bucharest")
     end
+
+    test "analogy", %{ref: ref} do
+      assert {:ok,
+              [
+                {"Leipzig", 15.524845123291016},
+                {"Weimar", 13.342169761657715},
+                {"Potsdam", 13.328055381774902}
+              ]} ==
+               ExFinalFusion.Native.analogy(ref, "Bremen", "Berlin", "Dresden", limit: 3, batch_size: 1)
+    end
+
+    test "analogy_masked", %{ref: ref} do
+      assert {:ok,
+              [
+                {"Dresden", 16.486913681030273},
+                {"Leipzig", 15.524845123291016},
+                {"Berlin", 13.962717056274414}
+              ]} ==
+               ExFinalFusion.Native.analogy_masked(ref, "Bremen", false, "Berlin", false, "Dresden", false,
+                 limit: 3,
+                 batch_size: 1
+               )
+    end
   end
 end
