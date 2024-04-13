@@ -166,6 +166,14 @@ defmodule ExFinalFusionTest do
                )
     end
 
+    test "word_cosine_similarity with default params", %{ref: ref} do
+      assert {:ok,
+              [
+                {"Leipzig", 282.1345520019531}
+              ]} ==
+               ExFinalFusion.Native.word_similarity(ref, "Berlin")
+    end
+
     test "word_angular_similarity", %{ref: ref} do
       assert {:ok,
               [
