@@ -140,5 +140,20 @@ defmodule ExFinalFusionTest do
                  batch_size: 1
                )
     end
+
+    test "word_similarity", %{ref: ref} do
+      assert {:ok,
+              [
+                {"Leipzig", 282.1345520019531},
+                {"Dresden", 269.9051818847656},
+                {"Potsdam", 261.2371826171875},
+                {"München", 260.3351745605469},
+                {"Hamburg", 248.80035400390625}
+              ]} ==
+               ExFinalFusion.Native.word_similarity(ref, "Berlin",
+                 limit: 5,
+                 batch_size: 1
+               )
+    end
   end
 end

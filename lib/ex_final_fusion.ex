@@ -95,6 +95,8 @@ defmodule ExFinalFusion.Native do
   def metadata(_arg1), do: err()
   @spec analogy(reference, String.t(), String.t(), String.t(), Keyword.t()) :: {:ok, [{String.t(), float}]}
   def analogy(_arg1, _arg2, _arg3, _arg4, _arg5 \\ []), do: err()
+  @spec word_similarity(reference, String.t(), Keyword.t()) :: {:ok, [{String.t(), float}]}
+  def word_similarity(_arg1, _arg2, _arg3 \\ []), do: err()
 
   @spec analogy_masked(reference, String.t(), String.t(), String.t(), bool, bool, bool, Keyword.t()) ::
           {:ok, [{String.t(), float}]}

@@ -2,7 +2,7 @@ pub mod error;
 use crate::error::ExFinalFusionError;
 use finalfusion::compat::floret::ReadFloretText;
 use finalfusion::prelude::*;
-use finalfusion::similarity::Analogy;
+use finalfusion::similarity::{Analogy, WordSimilarity};
 use finalfusion::vocab::{
     Vocab,
     WordIndex::{Subword, Word},
@@ -19,6 +19,16 @@ mod atoms {
         word,
         subword,
     }
+}
+
+#[derive(NifTaggedEnum)]
+pub enum SearchOptionPub {
+    Limit(usize),
+    BatchSize(usize),
+}
+struct SearchOption {
+    limit: usize,
+    batch_size: Option<usize>,
 }
 
 #[derive(NifTuple)]
@@ -164,19 +174,13 @@ pub fn words_len(reference: ExEmbeddings) -> usize {
     reference.resource.0.vocab().words_len()
 }
 
-#[derive(NifTaggedEnum)]
-pub enum AnalogyOption {
-    Limit(usize),
-    BatchSize(usize),
-}
-
 #[rustler::nif]
 pub fn analogy(
     reference: ExEmbeddings,
     w1: &str,
     w2: &str,
     w3: &str,
-    options: Vec<AnalogyOption>,
+    options: Vec<SearchOptionPub>,
 ) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
     analogy_wrapper(reference, [w1, w2, w3], [true; 3], options)
 }
@@ -189,7 +193,7 @@ pub fn analogy_masked(
     w2_mask: bool,
     w3: &str,
     w3_mask: bool,
-    options: Vec<AnalogyOption>,
+    options: Vec<SearchOptionPub>,
 ) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
     analogy_wrapper(
         reference,
@@ -198,26 +202,39 @@ pub fn analogy_masked(
         options,
     )
 }
+#[rustler::nif]
+fn word_similarity(
+    reference: ExEmbeddings,
+    string: &str,
+    options: Vec<SearchOptionPub>,
+) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
+    let opts = get_options(options);
+    let result = reference
+        .resource
+        .0
+        .word_similarity(string, opts.limit, opts.batch_size)
+        .iter()
+        .flat_map(|s| {
+            s.iter()
+                .map(|similarity| {
+                    (
+                        similarity.word().to_string(),
+                        similarity.cosine_similarity(),
+                    )
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    Ok(result)
+}
 fn analogy_wrapper(
     reference: ExEmbeddings,
     strings: [&str; 3],
     mask: [bool; 3],
-    options: Vec<AnalogyOption>,
+    options: Vec<SearchOptionPub>,
 ) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
-    struct Opts {
-        limit: usize,
-        batch_size: Option<usize>,
-    }
-
     // Default values
-    let mut opts = Opts {
-        limit: 1,
-        batch_size: None,
-    };
-    options.iter().for_each(|option| match option {
-        AnalogyOption::Limit(val) => opts.limit = *val,
-        AnalogyOption::BatchSize(val) => opts.batch_size = Some(*val),
-    });
+    let opts = get_options(options);
     let result = reference
         .resource
         .0
@@ -241,6 +258,17 @@ fn load(env: Env, _info: Term) -> bool {
     rustler::resource!(ExFinalFusionRef, env);
     true
 }
+fn get_options(options: Vec<SearchOptionPub>) -> SearchOption {
+    let mut opts = SearchOption {
+        limit: 1,
+        batch_size: None,
+    };
+    options.iter().for_each(|option| match option {
+        SearchOptionPub::Limit(val) => opts.limit = *val,
+        SearchOptionPub::BatchSize(val) => opts.batch_size = Some(*val),
+    });
+    opts
+}
 rustler::init!(
     "Elixir.ExFinalFusion.Native",
     [
@@ -254,6 +282,7 @@ rustler::init!(
         metadata,
         read,
         vocab_len,
+        word_similarity,
         words,
         words_len,
     ],
