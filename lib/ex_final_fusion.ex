@@ -5,6 +5,7 @@ defmodule ExFinalFusion do
 end
 
 defmodule ExFinalFusion.Embeddings do
+  @moduledoc false
   defstruct [:resource]
 end
 
@@ -18,6 +19,7 @@ defimpl Inspect, for: ExFinalFusion.Embeddings do
 end
 
 defmodule ExFinalFusion.Native do
+  @moduledoc false
   use Rustler,
     otp_app: :ex_final_fusion,
     crate: "exfinalfusion_native"

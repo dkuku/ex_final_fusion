@@ -1,5 +1,6 @@
 defmodule ExFinalFusionTest do
   use ExUnit.Case
+
   doctest ExFinalFusion
 
   describe "loads files" do
