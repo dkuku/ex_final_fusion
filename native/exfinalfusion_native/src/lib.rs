@@ -115,9 +115,9 @@ pub fn read(path: &str, filetype: FileType) -> Result<ExEmbeddings, ExFinalFusio
 pub fn embedding<'a>(
     env: Env<'a>,
     reference: ExEmbeddings,
-    string: &str,
+    query: &str,
 ) -> Result<Term<'a>, ExFinalFusionError> {
-    match &reference.resource.0.embedding(string) {
+    match &reference.resource.0.embedding(query) {
         Some(embeddings) => {
             let vec = &embeddings.iter().collect::<Vec<&f32>>();
             Ok(serde_rustler::to_term(env, vec)?)
@@ -131,9 +131,9 @@ pub fn embedding<'a>(
 pub fn embedding_batch<'a>(
     env: Env<'a>,
     reference: ExEmbeddings,
-    strings: Vec<&str>,
+    query: Vec<&str>,
 ) -> Result<Term<'a>, ExFinalFusionError> {
-    let (embeddings, _rest) = &reference.resource.0.embedding_batch(&strings);
+    let (embeddings, _rest) = &reference.resource.0.embedding_batch(&query);
     let embeddings_array = embeddings
         .axis_iter(Axis(0))
         .map(|x| x.iter().cloned().collect::<Vec<f32>>())
@@ -144,9 +144,9 @@ pub fn embedding_batch<'a>(
 pub fn mean_embedding_batch<'a>(
     env: Env<'a>,
     reference: ExEmbeddings,
-    strings: Vec<&str>,
+    query: Vec<&str>,
 ) -> Result<Term<'a>, ExFinalFusionError> {
-    let (embeddings, included) = &reference.resource.0.embedding_batch(&strings);
+    let (embeddings, included) = &reference.resource.0.embedding_batch(&query);
 
     let count = included.iter().filter(|bool| **bool).count() as f32;
 
@@ -187,8 +187,8 @@ pub fn words(env: Env<'_>, reference: ExEmbeddings) -> Result<Term<'_>, ExFinalF
     Ok(serde_rustler::to_term(env, vocab_words)?)
 }
 #[rustler::nif]
-pub fn idx<'a>(env: Env<'a>, reference: ExEmbeddings, string: &str) -> Option<Term<'a>> {
-    match reference.resource.0.vocab().idx(string) {
+pub fn idx<'a>(env: Env<'a>, reference: ExEmbeddings, query: &str) -> Option<Term<'a>> {
+    match reference.resource.0.vocab().idx(query) {
         Some(Word(index)) => Some((atoms::word(), vec![index]).encode(env)),
         Some(Subword(indexes)) => Some((atoms::subword(), indexes).encode(env)),
         None => None,
@@ -243,14 +243,14 @@ pub fn analogy_masked(
 #[rustler::nif]
 fn word_similarity(
     reference: ExEmbeddings,
-    string: &str,
+    query: &str,
     options: Vec<SearchOptionPub>,
 ) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
     let opts = get_options(options);
     let result = reference
         .resource
         .0
-        .word_similarity(string, opts.limit, opts.batch_size)
+        .word_similarity(query, opts.limit, opts.batch_size)
         .expect("Similarities not found");
     let data = convert_result(result, &opts);
     Ok(data)
@@ -275,7 +275,7 @@ fn embedding_similarity(
 
 fn analogy_wrapper(
     reference: ExEmbeddings,
-    strings: [&str; 3],
+    query: [&str; 3],
     mask: [bool; 3],
     options: Vec<SearchOptionPub>,
 ) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
@@ -284,7 +284,7 @@ fn analogy_wrapper(
     let result = reference
         .resource
         .0
-        .analogy_masked(strings, mask, opts.limit, opts.batch_size)
+        .analogy_masked(query, mask, opts.limit, opts.batch_size)
         .map_err(|_e| ExFinalFusionError::Other("Mask problem".to_string()))?;
     Ok(convert_result(result, &opts))
 }
