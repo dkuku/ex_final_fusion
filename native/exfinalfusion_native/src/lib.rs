@@ -315,7 +315,6 @@ rustler::init!(
 //    "embedding_into",
 //    "embedding_with_norm",
 
-//    "fmt",
 //    "embedding_similarity_masked",
 //    "embedding_similarity",
 //    "quantize_using",

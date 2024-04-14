@@ -5,72 +5,72 @@ defmodule ExFinalFusionTest do
 
   describe "loads files" do
     test "fifu" do
-      assert {:ok, ref} = ExFinalFusion.Native.read("test/testdata/similarity.fifu", :fifu)
-      assert {:ok, _emb} = ExFinalFusion.Native.embedding(ref, "Berlin")
+      assert {:ok, ref} = ExFinalFusion.read("test/testdata/similarity.fifu", :fifu)
+      assert {:ok, _emb} = ExFinalFusion.embedding(ref, "Berlin")
     end
 
     test "fasttext" do
       assert {:ok, ref} =
-               ExFinalFusion.Native.read("test/testdata/fasttext.bin", :fasttext)
+               ExFinalFusion.read("test/testdata/fasttext.bin", :fasttext)
 
-      assert {:ok, _emb} = ExFinalFusion.Native.embedding(ref, "Berlin")
+      assert {:ok, _emb} = ExFinalFusion.embedding(ref, "Berlin")
     end
 
     test "text" do
       assert {:ok, ref} =
-               ExFinalFusion.Native.read("test/testdata/similarity.nodims", :text)
+               ExFinalFusion.read("test/testdata/similarity.nodims", :text)
 
-      assert {:ok, _emb} = ExFinalFusion.Native.embedding(ref, "Berlin")
+      assert {:ok, _emb} = ExFinalFusion.embedding(ref, "Berlin")
     end
 
     test "text_dims" do
       assert {:ok, ref} =
-               ExFinalFusion.Native.read("test/testdata/similarity.txt", :text_dims)
+               ExFinalFusion.read("test/testdata/similarity.txt", :text_dims)
 
-      assert {:ok, _emb} = ExFinalFusion.Native.embedding(ref, "Berlin")
+      assert {:ok, _emb} = ExFinalFusion.embedding(ref, "Berlin")
     end
 
     test "word2vec" do
       assert {:ok, ref} =
-               ExFinalFusion.Native.read("test/testdata/similarity.bin", :word2vec)
+               ExFinalFusion.read("test/testdata/similarity.bin", :word2vec)
 
-      assert {:ok, _emb} = ExFinalFusion.Native.embedding(ref, "Berlin")
+      assert {:ok, _emb} = ExFinalFusion.embedding(ref, "Berlin")
     end
   end
 
   describe "embeddings batch" do
     test "fifu" do
-      assert {:ok, ref} = ExFinalFusion.Native.read("test/testdata/similarity.fifu", :fifu)
-      assert {:ok, emb} = ExFinalFusion.Native.embedding(ref, "Berlin")
-      assert {:ok, [emb_berlin, _emb_bremen]} = ExFinalFusion.Native.embedding_batch(ref, ["Berlin", "Bremen"])
+      assert {:ok, ref} = ExFinalFusion.read("test/testdata/similarity.fifu", :fifu)
+      assert {:ok, emb} = ExFinalFusion.embedding(ref, "Berlin")
+      assert {:ok, [emb_berlin, _emb_bremen]} = ExFinalFusion.embedding_batch(ref, ["Berlin", "Bremen"])
       assert emb_berlin == emb
     end
   end
 
   describe "metadata" do
     setup do
-      {:ok, ref} = ExFinalFusion.Native.read("test/testdata/similarity.fifu", :fifu)
+      {:ok, ref} = ExFinalFusion.read("test/testdata/similarity.fifu", :fifu)
       [ref: ref]
     end
 
     test "len", %{ref: ref} do
-      assert 41 == ExFinalFusion.Native.len(ref)
+      assert 41 == ExFinalFusion.len(ref)
     end
 
     test "words_len", %{ref: ref} do
-      assert 41 == ExFinalFusion.Native.words_len(ref)
+      assert 41 == ExFinalFusion.words_len(ref)
     end
 
     test "vocab_len", %{ref: ref} do
-      assert 41 == ExFinalFusion.Native.vocab_len(ref)
+      assert 41 == ExFinalFusion.vocab_len(ref)
     end
 
     test "dims", %{ref: ref} do
-      assert 100 == ExFinalFusion.Native.dims(ref)
+      assert 100 == ExFinalFusion.dims(ref)
     end
 
     test "metadata", %{ref: ref} do
-      assert nil == ExFinalFusion.Native.metadata(ref)
+      assert nil == ExFinalFusion.metadata(ref)
     end
 
     test "words", %{ref: ref} do
@@ -118,13 +118,13 @@ defmodule ExFinalFusionTest do
                 "Warschau",
                 "Berlin-Spandau"
               ]} ==
-               ExFinalFusion.Native.words(ref)
+               ExFinalFusion.words(ref)
     end
 
     test "idx", %{ref: ref} do
-      assert {:word, [0]} == ExFinalFusion.Native.idx(ref, "Berlin")
-      assert {:word, [23]} == ExFinalFusion.Native.idx(ref, "Bremen")
-      assert nil == ExFinalFusion.Native.idx(ref, "Bucharest")
+      assert {:word, [0]} == ExFinalFusion.idx(ref, "Berlin")
+      assert {:word, [23]} == ExFinalFusion.idx(ref, "Bremen")
+      assert nil == ExFinalFusion.idx(ref, "Bucharest")
     end
 
     test "analogy", %{ref: ref} do
@@ -134,7 +134,7 @@ defmodule ExFinalFusionTest do
                 {"Weimar", 13.342169761657715},
                 {"Potsdam", 13.328055381774902}
               ]} ==
-               ExFinalFusion.Native.analogy(ref, "Bremen", "Berlin", "Dresden", limit: 3, batch_size: 1)
+               ExFinalFusion.analogy(ref, "Bremen", "Berlin", "Dresden", limit: 3, batch_size: 1)
     end
 
     test "analogy_masked", %{ref: ref} do
@@ -144,7 +144,7 @@ defmodule ExFinalFusionTest do
                 {"Leipzig", 15.524845123291016},
                 {"Berlin", 13.962717056274414}
               ]} ==
-               ExFinalFusion.Native.analogy_masked(ref, "Bremen", false, "Berlin", false, "Dresden", false,
+               ExFinalFusion.analogy_masked(ref, "Bremen", false, "Berlin", false, "Dresden", false,
                  limit: 3,
                  batch_size: 1
                )
@@ -159,7 +159,7 @@ defmodule ExFinalFusionTest do
                 {"München", 260.3351745605469},
                 {"Hamburg", 248.80035400390625}
               ]} ==
-               ExFinalFusion.Native.word_similarity(ref, "Berlin",
+               ExFinalFusion.word_similarity(ref, "Berlin",
                  similarity_type: :cosine_similarity,
                  limit: 5,
                  batch_size: 1
@@ -171,7 +171,7 @@ defmodule ExFinalFusionTest do
               [
                 {"Leipzig", 282.1345520019531}
               ]} ==
-               ExFinalFusion.Native.word_similarity(ref, "Berlin")
+               ExFinalFusion.word_similarity(ref, "Berlin")
     end
 
     test "word_angular_similarity", %{ref: ref} do
@@ -183,7 +183,7 @@ defmodule ExFinalFusionTest do
                 {"München", 0.0},
                 {"Hamburg", 0.0}
               ]} ==
-               ExFinalFusion.Native.word_similarity(ref, "Berlin",
+               ExFinalFusion.word_similarity(ref, "Berlin",
                  similarity_type: :angular_similarity,
                  limit: 5,
                  batch_size: 1
@@ -199,7 +199,7 @@ defmodule ExFinalFusionTest do
                 {"München", 0.0},
                 {"Hamburg", 0.0}
               ]} ==
-               ExFinalFusion.Native.word_similarity(ref, "Berlin",
+               ExFinalFusion.word_similarity(ref, "Berlin",
                  similarity_type: :euclidean_similarity,
                  limit: 5,
                  batch_size: 1
@@ -215,7 +215,7 @@ defmodule ExFinalFusionTest do
                 {"München", 0.0},
                 {"Hamburg", 0.0}
               ]} ==
-               ExFinalFusion.Native.word_similarity(ref, "Berlin",
+               ExFinalFusion.word_similarity(ref, "Berlin",
                  similarity_type: :euclidean_distance,
                  limit: 5,
                  batch_size: 1
