@@ -483,6 +483,7 @@ dependencies = [
 [[package]]
 name = "serde_rustler"
 version = "0.0.8"
+source = "git+https://github.com/dkuku/serde_rustler.git#4dc6d8dd2c5a81c691fbf81c5b6d4ca5144d48ff"
 dependencies = [
  "lazy_static",
  "quick-error",

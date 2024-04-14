@@ -14,7 +14,7 @@ anyhow = "1.0"
 finalfusion = "0.18"
 thiserror = "1.0"
 ndarray = { version = "0.15.6", features = ["serde"] }
-serde_rustler = { path = "../../../serde_rustler/serde_rustler" }
+serde_rustler = { git = "https://github.com/dkuku/serde_rustler.git" }
 serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0"
 rustler = "0.32"
