@@ -22,13 +22,15 @@ defmodule ExFinalFusion.Native do
   default options:
   limit: 1,
   batch_size: None, means all at once - this is memory intensive.
-  similarity_type: :cosine_similarity
+  similarity_type: :cosine_similarity,
+  skip: [], only for embedding_similarity as a mask
 
   """
   @type search_options :: [
           limit: integer,
           batch_size: integer,
-          similarity_type: similarity_type
+          similarity_type: similarity_type,
+          skip: [String.t()]
         ]
   @typedoc """
   It allows to specify what function will be used to parse the embeddings
@@ -81,10 +83,17 @@ defmodule ExFinalFusion.Native do
   def embedding(_arg1, _arg2), do: err()
 
   @doc """
-  returns a vector of embeddings of a word
+  returns a list of embeddings for provided word
   """
-  @spec embedding(reference(), [String.t()]) :: {:ok, [[float]]}
+  @spec embedding_batch(reference(), [String.t()]) :: {:ok, [[float]]}
   def embedding_batch(_arg1, _arg2), do: err()
+
+  @doc """
+  Returns the average embedding for the provided word and the fraction of
+   how many words were included in the calculation.
+  """
+  @spec mean_embedding_batch(reference(), [String.t()]) :: {:ok, [[float]], float}
+  def mean_embedding_batch(_arg1, _arg2), do: err()
 
   @doc """
   returns a list of words included in the embeddings
@@ -118,10 +127,15 @@ defmodule ExFinalFusion.Native do
 
   @doc """
   returns words that are similar to the query word.
-  the options are
   """
   @spec word_similarity(reference, String.t(), Keyword.t()) :: {:ok, [{String.t(), float}]}
   def word_similarity(_arg1, _arg2, _arg3 \\ []), do: err()
+
+  @doc """
+  returns words that are similar to the query vector.
+  """
+  @spec embedding_similarity(reference, [float], Keyword.t()) :: {:ok, [{String.t(), float}]}
+  def embedding_similarity(_arg1, _arg2, _arg3 \\ []), do: err()
 
   @doc """
   returns the calculated analogy

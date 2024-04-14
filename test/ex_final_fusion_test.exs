@@ -38,12 +38,42 @@ defmodule ExFinalFusionTest do
     end
   end
 
-  describe "embeddings batch" do
-    test "fifu" do
+  describe "embeddings" do
+    test "emdedding" do
       assert {:ok, ref} = ExFinalFusion.read("test/testdata/similarity.fifu", :fifu)
       assert {:ok, emb} = ExFinalFusion.embedding(ref, "Berlin")
       assert {:ok, [emb_berlin, _emb_bremen]} = ExFinalFusion.embedding_batch(ref, ["Berlin", "Bremen"])
       assert emb_berlin == emb
+    end
+
+    test "emdedding_batch" do
+      assert {:ok, ref} = ExFinalFusion.read("test/testdata/similarity.fifu", :fifu)
+      assert {:ok, emb} = ExFinalFusion.embedding_batch(ref, ["Berlin"])
+      assert is_list(emb)
+    end
+
+    test "mean_emdedding_batch" do
+      assert {:ok, ref} = ExFinalFusion.read("test/testdata/similarity.fifu", :fifu)
+      assert {:ok, {emb, fraction}} = ExFinalFusion.mean_embedding_batch(ref, ["Berlin"])
+      assert is_list(emb)
+      assert 1.0 == fraction
+    end
+
+    test "mean_emdedding_batch 1/2" do
+      assert {:ok, ref} = ExFinalFusion.read("test/testdata/similarity.fifu", :fifu)
+      assert {:ok, {emb, fraction}} = ExFinalFusion.mean_embedding_batch(ref, ["Berlin", "XXX"])
+      assert is_list(emb)
+      assert 0.5 == fraction
+    end
+
+    test "mean_emdedding_batch + embedding similarity" do
+      assert {:ok, ref} = ExFinalFusion.read("test/testdata/similarity.fifu", :fifu)
+      words = ["Berlin", "Bremen"]
+      assert {:ok, {emb, _fraction}} = ExFinalFusion.mean_embedding_batch(ref, words)
+      assert is_list(emb)
+
+      assert {:ok, [{"Leipzig", 15.904354095458984}, {"Hannover", 15.793999671936035}, {"Hamburg", 15.789519309997559}]} =
+               ExFinalFusion.embedding_similarity(ref, emb, skip: words, limit: 3)
     end
   end
 

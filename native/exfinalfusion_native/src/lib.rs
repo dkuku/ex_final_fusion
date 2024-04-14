@@ -2,12 +2,13 @@ pub mod error;
 use crate::error::ExFinalFusionError;
 use finalfusion::compat::floret::ReadFloretText;
 use finalfusion::prelude::*;
-use finalfusion::similarity::{Analogy, WordSimilarity, WordSimilarityResult};
+use finalfusion::similarity::{Analogy, EmbeddingSimilarity, WordSimilarity, WordSimilarityResult};
 use finalfusion::vocab::{
     Vocab,
     WordIndex::{Subword, Word},
 };
-use ndarray::Axis;
+use ndarray::{ArrayView, Axis};
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufReader;
 use std::ops::Deref;
@@ -29,16 +30,18 @@ pub enum SimilarityType {
     EuclideanDistance,
 }
 #[derive(NifTaggedEnum, Debug)]
-pub enum SearchOptionPub {
+pub enum SearchOptionPub<'a> {
     Limit(usize),
     BatchSize(usize),
     SimilarityType(SimilarityType),
+    Skip(Vec<&'a str>),
 }
 #[derive(Debug)]
-struct SearchOption {
+struct SearchOption<'a> {
     limit: usize,
     batch_size: Option<usize>,
     similarity_type: SimilarityType,
+    skip: HashSet<&'a str>,
 }
 
 #[derive(NifTuple)]
@@ -109,19 +112,6 @@ pub fn read(path: &str, filetype: FileType) -> Result<ExEmbeddings, ExFinalFusio
     Ok(embeddings.into())
 }
 #[rustler::nif]
-pub fn embedding_batch<'a>(
-    env: Env<'a>,
-    reference: ExEmbeddings,
-    strings: Vec<&str>,
-) -> Result<Term<'a>, ExFinalFusionError> {
-    let (embeddings, _rest) = &reference.resource.0.embedding_batch(&strings);
-    let embeddings_array = embeddings
-        .axis_iter(Axis(0))
-        .map(|x| x.iter().cloned().collect::<Vec<f32>>())
-        .collect::<Vec<_>>();
-    Ok(serde_rustler::to_term(env, &embeddings_array)?)
-}
-#[rustler::nif]
 pub fn embedding<'a>(
     env: Env<'a>,
     reference: ExEmbeddings,
@@ -135,6 +125,42 @@ pub fn embedding<'a>(
         None => Err(ExFinalFusionError::Internal(
             "embedding not found".to_string(),
         )),
+    }
+}
+#[rustler::nif]
+pub fn embedding_batch<'a>(
+    env: Env<'a>,
+    reference: ExEmbeddings,
+    strings: Vec<&str>,
+) -> Result<Term<'a>, ExFinalFusionError> {
+    let (embeddings, _rest) = &reference.resource.0.embedding_batch(&strings);
+    let embeddings_array = embeddings
+        .axis_iter(Axis(0))
+        .map(|x| x.iter().cloned().collect::<Vec<f32>>())
+        .collect::<Vec<_>>();
+    Ok(serde_rustler::to_term(env, &embeddings_array)?)
+}
+#[rustler::nif]
+pub fn mean_embedding_batch<'a>(
+    env: Env<'a>,
+    reference: ExEmbeddings,
+    strings: Vec<&str>,
+) -> Result<Term<'a>, ExFinalFusionError> {
+    let (embeddings, included) = &reference.resource.0.embedding_batch(&strings);
+
+    let count = included.iter().filter(|bool| **bool).count() as f32;
+
+    if count == 0.0 {
+        Err(ExFinalFusionError::Other(
+            "none of the provided words found in the model".to_string(),
+        ))
+    } else {
+        let sum = embeddings.sum_axis(Axis(0)) / count;
+        Ok((
+            &sum.iter().collect::<Vec<&f32>>(),
+            count / included.len() as f32,
+        )
+            .encode(env))
     }
 }
 #[rustler::nif]
@@ -230,6 +256,23 @@ fn word_similarity(
     Ok(data)
 }
 
+#[rustler::nif]
+fn embedding_similarity(
+    reference: ExEmbeddings,
+    query: Vec<f32>,
+    options: Vec<SearchOptionPub>,
+) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
+    let opts = get_options(options);
+    let array_view = ArrayView::from(&query);
+    let result = reference
+        .resource
+        .0
+        .embedding_similarity_masked(array_view, opts.limit, &opts.skip, opts.batch_size)
+        .expect("Similarities not found");
+    let data = convert_result(result, &opts);
+    Ok(data)
+}
+
 fn analogy_wrapper(
     reference: ExEmbeddings,
     strings: [&str; 3],
@@ -281,12 +324,14 @@ fn get_options(options: Vec<SearchOptionPub>) -> SearchOption {
         limit: 1,
         batch_size: None,
         similarity_type: SimilarityType::CosineSimilarity,
+        skip: HashSet::new(),
     };
 
     options.iter().for_each(|option| match option {
         SearchOptionPub::Limit(val) => opts.limit = *val,
         SearchOptionPub::BatchSize(val) => opts.batch_size = Some(*val),
         SearchOptionPub::SimilarityType(val) => opts.similarity_type = val.clone(),
+        SearchOptionPub::Skip(val) => opts.skip = HashSet::from_iter(val.to_owned()),
     });
     opts
 }
@@ -298,8 +343,10 @@ rustler::init!(
         dims,
         embedding,
         embedding_batch,
+        embedding_similarity,
         idx,
         len,
+        mean_embedding_batch,
         metadata,
         read,
         vocab_len,
@@ -316,8 +363,6 @@ rustler::init!(
 //    "embedding_into",
 //    "embedding_with_norm",
 
-//    "embedding_similarity_masked",
-//    "embedding_similarity",
 //    "quantize_using",
 //    "quantize",
 //    "type_id",
