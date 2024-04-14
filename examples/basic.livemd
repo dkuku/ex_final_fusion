@@ -1,0 +1,74 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Untitled notebook
+
+```elixir
+Mix.install([
+  {:ex_final_fusion, "~> 0.1.0"}
+])
+```
+
+## Section
+
+```elixir
+{:ok, ref} = ExFinalFusion.read("~/cc.pl.300.bin", :fasttext)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, #ExFinalFusion<0.994911395.4139909124.42479>}
+```
+
+```elixir
+query = ["pies", "kot", "lis"]
+{:ok, {vec, _}} = ExFinalFusion.mean_embedding_batch(ref, query)
+ExFinalFusion.embedding_similarity(ref, vec, skip: query, limit: 5)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok,
+ [
+   {"piesek", 0.7294180393218994},
+   {"Pies", 0.7123726606369019},
+   {"kocur", 0.7055572271347046},
+   {"kotek", 0.6911299824714661},
+   {"zwierzak", 0.6870898008346558}
+ ]}
+```
+
+```elixir
+ExFinalFusion.analogy(ref, "papuga", "pies", "młotek", limit: 5)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok,
+ [
+   {"nóż", 0.4930921494960785},
+   {"Pies", 0.4844633936882019},
+   {"kij", 0.48363009095191956},
+   {"piesek", 0.4727526009082794},
+   {"młotekmaj", 0.457378089427948}
+ ]}
+```
+
+```elixir
+ExFinalFusion.word_similarity(ref, "kaczka", limit: 5)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok,
+ [
+   {"kaczki", 0.646961510181427},
+   {"Kaczka", 0.6459450721740723},
+   {"kaczką", 0.6333967447280884},
+   {"gęś", 0.6245576739311218},
+   {"kaczkę", 0.6081993579864502}
+ ]}
+```
