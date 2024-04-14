@@ -1,23 +1,66 @@
 defmodule ExFinalFusion do
   @moduledoc """
-  Documentation for `ExFinalFusion`.
+  ExFinalFusion is an Elixir binding to the Rust crate.
+  [finalfusion](https://crates.io/crates/finalfusion)
+  Finalfusion is a file format for word embeddings,
+  along with an associated set of libraries and utilities.
+
+  from the crate documentation:
+  finalfusion supports a variety of formats:
+  - Vocabulary
+       - Subwords
+       - No subwords
+  - Storage
+       - Array
+       - Memory-mapped
+       - Quantized
+  - Format
+       - finalfusion
+       - fastText
+       - floret
+       - GloVe
+       - word2vec
+
+  Moreover, finalfusion provides:
+
+  - Similarity queries
+  - Analogy queries
+  - Quantizing embeddings through reductive
+  - Conversion to the following formats:
+       - finalfusion
+       - word2vec
+       - GloVe
+
+  [final fusion file format](https://finalfusion.github.io/spec)
+
+  [Project page](https://finalfusion.github.io/)
+
+  [Train embeddings](https://finalfusion.github.io/finalfrontier.html)
 
   Where to get models:
-  - https://fasttext.cc/
+
+  - [Fasttext models](https://fasttext.cc/)
   """
   alias ExFinalFusion.Native
 
+  @typedoc """
+  This specifies how to calculate the similarity type when returning
+  similarities. This only changes the returned value, as cosine similarity
+  is always used.
+  """
   @type similarity_type ::
           :cosine_similarity
           | :angular_similarity
           | :euclidean_similarity
           | :euclidean_distance
   @typedoc """
-  default options:
+  Options passed to the functions that search for embeddings:
 
-  - limit: 1,
-  - batch_size: None, means all at once - this is memory intensive.
-  - similarity_type: :cosine_similarity
+  Default options:
+  - Limit: 1
+  - Batch size: None (means all at once, but this is memory intensive)
+  - Similarity type: Cosine similarity
+
   """
   @type search_options :: [
           limit: integer,
@@ -25,9 +68,9 @@ defmodule ExFinalFusion do
           similarity_type: similarity_type
         ]
   @typedoc """
-  It allows to specify what function will be used to parse the embeddings
-  file.
-  You can find more in the rust crate documentation
+  It allows you to specify which function will be used to parse the
+   embeddings file. You can find more information in the Rust crate
+   documentation.
   """
   @type read_type ::
           :floret_text
@@ -46,7 +89,7 @@ defmodule ExFinalFusion do
           | :floret
 
   @doc """
-  Functions available on embeddings module
+  Functions Available on the Embeddings Module
 
   - :floret_text,
   - :embeddings,
@@ -70,25 +113,25 @@ defmodule ExFinalFusion do
   defdelegate read(path, model_type), to: Native
 
   @doc """
-  returns embedding of a word
+  Returns the embedding of a word.
   """
   @spec embedding(reference(), String.t()) :: {:ok, [float]}
   defdelegate embedding(ref, word), to: Native
 
   @doc """
-  returns a vector of embeddings of a word
+  Returns a vector of embeddings for a word.
   """
   @spec embedding(reference(), [String.t()]) :: {:ok, [[float]]}
   defdelegate embedding_batch(ref, list_of_words), to: Native
 
   @doc """
-  returns a list of words included in the embeddings
+  Returns a list of words included in the embeddings.
   """
   @spec words(reference()) :: [String.t()]
   defdelegate words(ref), to: Native
 
   @doc """
-  returns the index of a word
+  Returns the index of a word.
   """
   @spec idx(reference(), String.t()) :: nil | {:word, [integer]} | {:subword, [integer]}
   defdelegate idx(ref, word), to: Native
@@ -106,20 +149,19 @@ defmodule ExFinalFusion do
   defdelegate dims(ref), to: Native
 
   @doc """
-  returns the metadata as a map or nil
+  Returns the metadata as a map or nil.
   """
   @spec metadata(reference()) :: map() | nil
   defdelegate metadata(ref), to: Native
 
   @doc """
-  returns words that are similar to the query word.
-  the options are
+  Returns words that are similar to the query word.
   """
   @spec word_similarity(reference, String.t(), search_options) :: {:ok, [{String.t(), float}]}
   defdelegate word_similarity(ref, word, search_params \\ []), to: Native
 
   @doc """
-  returns the calculated analogy
+  Returns the calculated analogy.
 
   This method returns words that are close in vector space for the
   analogy query word1 is to word2 as word3 is to ?.
@@ -129,7 +171,8 @@ defmodule ExFinalFusion do
   defdelegate analogy(ref, word1, word2, word3, search_options \\ []), to: Native
 
   @doc """
-  similar to the analogy query but allows to remove queried words from results
+  This function is similar to the analogy query, but it also allows for
+  the removal of queried words from the results.
   """
   @spec analogy_masked(reference, String.t(), bool, String.t(), bool, String.t(), bool, search_options) ::
           {:ok, [{String.t(), float}]}

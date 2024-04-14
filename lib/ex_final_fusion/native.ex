@@ -7,12 +7,18 @@ defmodule ExFinalFusion.Native do
     otp_app: :ex_final_fusion,
     crate: "exfinalfusion_native"
 
+  @typedoc """
+  Specifies how to calculate the similarity type when returning similarities.
+  This only changes the returned value. Cosine similarity is always used.
+  """
   @type similarity_type ::
           :cosine_similarity
           | :angular_similarity
           | :euclidean_similarity
           | :euclidean_distance
   @typedoc """
+  Options passed to the functions that search for embeddings
+
   default options:
   limit: 1,
   batch_size: None, means all at once - this is memory intensive.
