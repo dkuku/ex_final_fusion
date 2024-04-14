@@ -195,6 +195,7 @@ pub fn analogy(
 ) -> Result<Vec<(String, f32)>, ExFinalFusionError> {
     analogy_wrapper(reference, [w1, w2, w3], [true; 3], options)
 }
+#[allow(clippy::too_many_arguments)]
 #[rustler::nif]
 pub fn analogy_masked(
     reference: ExEmbeddings,
