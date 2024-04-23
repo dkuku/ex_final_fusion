@@ -87,7 +87,7 @@ pub enum FileType {
     Floret,
 }
 
-#[rustler::nif]
+#[rustler::nif(schedule = "DirtyIo")]
 pub fn read(path: &str, filetype: FileType) -> Result<ExEmbeddings, ExFinalFusionError> {
     let file = File::open(path).unwrap();
     let mut reader = BufReader::new(file);
@@ -111,7 +111,7 @@ pub fn read(path: &str, filetype: FileType) -> Result<ExEmbeddings, ExFinalFusio
     };
     Ok(embeddings.into())
 }
-#[rustler::nif]
+#[rustler::nif(schedule = "DirtyCpu")]
 pub fn embedding<'a>(
     env: Env<'a>,
     reference: ExEmbeddings,
@@ -127,7 +127,7 @@ pub fn embedding<'a>(
         )),
     }
 }
-#[rustler::nif]
+#[rustler::nif(schedule = "DirtyCpu")]
 pub fn embedding_batch<'a>(
     env: Env<'a>,
     reference: ExEmbeddings,
@@ -140,7 +140,7 @@ pub fn embedding_batch<'a>(
         .collect::<Vec<_>>();
     Ok(serde_rustler::to_term(env, &embeddings_array)?)
 }
-#[rustler::nif]
+#[rustler::nif(schedule = "DirtyCpu")]
 pub fn mean_embedding_batch<'a>(
     env: Env<'a>,
     reference: ExEmbeddings,
@@ -211,7 +211,7 @@ pub fn words_len(reference: ExEmbeddings) -> usize {
     reference.resource.0.vocab().words_len()
 }
 
-#[rustler::nif]
+#[rustler::nif(schedule = "DirtyCpu")]
 pub fn analogy(
     reference: ExEmbeddings,
     w1: &str,
@@ -222,7 +222,7 @@ pub fn analogy(
     analogy_wrapper(reference, [w1, w2, w3], [true; 3], options)
 }
 #[allow(clippy::too_many_arguments)]
-#[rustler::nif]
+#[rustler::nif(schedule = "DirtyCpu")]
 pub fn analogy_masked(
     reference: ExEmbeddings,
     w1: &str,
@@ -240,7 +240,7 @@ pub fn analogy_masked(
         options,
     )
 }
-#[rustler::nif]
+#[rustler::nif(schedule = "DirtyCpu")]
 fn word_similarity(
     reference: ExEmbeddings,
     query: &str,
@@ -256,7 +256,7 @@ fn word_similarity(
     Ok(data)
 }
 
-#[rustler::nif]
+#[rustler::nif(schedule = "DirtyCpu")]
 fn embedding_similarity(
     reference: ExEmbeddings,
     query: Vec<f32>,
