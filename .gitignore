@@ -26,3 +26,4 @@ ex_final_fusion-*.tar
 /tmp/
 
 /priv/native
+.elixir-tools

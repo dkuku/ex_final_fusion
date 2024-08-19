@@ -4,7 +4,7 @@ defmodule ExFinalFusion.MixProject do
   def project do
     [
       app: :ex_final_fusion,
-      version: "0.1.1",
+      version: "0.1.2",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -47,8 +47,8 @@ defmodule ExFinalFusion.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:rustler, "~> 0.32.1", runtime: false},
-      {:ex_doc, "~> 0.31", only: :dev, runtime: false},
+      {:rustler, "~> 0.34", runtime: false},
+      {:ex_doc, "~> 0.32", only: :dev, runtime: false},
       {:styler, "~> 0.11", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]

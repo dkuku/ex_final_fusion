@@ -120,7 +120,7 @@ pub fn embedding<'a>(
     match &reference.resource.0.embedding(query) {
         Some(embeddings) => {
             let vec = &embeddings.iter().collect::<Vec<&f32>>();
-            Ok(serde_rustler::to_term(env, vec)?)
+            Ok(rustler::serde::to_term(env, vec)?)
         }
         None => Err(ExFinalFusionError::Internal(
             "embedding not found".to_string(),
@@ -138,7 +138,7 @@ pub fn embedding_batch<'a>(
         .axis_iter(Axis(0))
         .map(|x| x.iter().cloned().collect::<Vec<f32>>())
         .collect::<Vec<_>>();
-    Ok(serde_rustler::to_term(env, &embeddings_array)?)
+    Ok(rustler::serde::to_term(env, &embeddings_array)?)
 }
 #[rustler::nif(schedule = "DirtyCpu")]
 pub fn mean_embedding_batch<'a>(
@@ -168,7 +168,7 @@ pub fn metadata(env: Env, reference: ExEmbeddings) -> Option<Term> {
     let embeds = &reference.resource.0;
     match embeds.metadata() {
         None => None,
-        Some(metadata) => match serde_rustler::to_term(env, metadata.deref()) {
+        Some(metadata) => match rustler::serde::to_term(env, metadata.deref()) {
             Ok(term) => Some(term),
             Err(_e) => None,
         },
@@ -184,7 +184,7 @@ pub fn words(env: Env<'_>, reference: ExEmbeddings) -> Result<Term<'_>, ExFinalF
         .iter()
         .map(|word| word.to_string())
         .collect::<Vec<String>>();
-    Ok(serde_rustler::to_term(env, vocab_words)?)
+    Ok(rustler::serde::to_term(env, vocab_words)?)
 }
 #[rustler::nif]
 pub fn idx<'a>(env: Env<'a>, reference: ExEmbeddings, query: &str) -> Option<Term<'a>> {
@@ -316,7 +316,7 @@ fn get_similarity_value(
     }
 }
 fn load(env: Env, _info: Term) -> bool {
-    rustler::resource!(ExFinalFusionRef, env);
+    let _ = rustler::resource!(ExFinalFusionRef, env);
     true
 }
 fn get_options(options: Vec<SearchOptionPub>) -> SearchOption {
@@ -335,35 +335,4 @@ fn get_options(options: Vec<SearchOptionPub>) -> SearchOption {
     });
     opts
 }
-rustler::init!(
-    "Elixir.ExFinalFusion.Native",
-    [
-        analogy,
-        analogy_masked,
-        dims,
-        embedding,
-        embedding_batch,
-        embedding_similarity,
-        idx,
-        len,
-        mean_embedding_batch,
-        metadata,
-        read,
-        vocab_len,
-        word_similarity,
-        words,
-        words_len,
-    ],
-    load = load
-);
-//vec![
-//    "into_parts",
-//    "norms",
-
-//    "embedding_into",
-//    "embedding_with_norm",
-
-//    "quantize_using",
-//    "quantize",
-//    "type_id",
-//];
+rustler::init!("Elixir.ExFinalFusion.Native", load = load);

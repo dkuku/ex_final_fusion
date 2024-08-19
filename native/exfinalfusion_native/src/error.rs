@@ -1,6 +1,6 @@
 use finalfusion::error::Error as FinalFusionError;
+use rustler::serde::Error as SerdeRustlerError;
 use rustler::{Encoder, Env, Term};
-use serde_rustler::Error as SerdeRustlerError;
 use std::io;
 use thiserror::Error;
 
